@@ -5,7 +5,9 @@
   "main": "src/main/main.js",
   "scripts": {
     "start": "electron .",
-    "build-native": "C:\\Windows\\Microsoft.NET\\Framework64\\v4.0.30319\\csc.exe /target:exe /optimize+ /out:native\\InputHookWorker.exe native\\InputHookWorker.cs"
+    "build-native": "node -e \"process.platform === 'win32' ? require('child_process').execSync('npm run build-native:win', {stdio: 'inherit'}) : require('child_process').execSync('npm run build-native:mac', {stdio: 'inherit'})\"",
+    "build-native:win": "C:\\Windows\\Microsoft.NET\\Framework64\\v4.0.30319\\csc.exe /target:exe /optimize+ /out:native\\InputHookWorker.exe native\\InputHookWorker.cs",
+    "build-native:mac": "clang -O2 native/InputHookWorker_mac.c -framework ApplicationServices -framework CoreGraphics -framework Foundation -o native/InputHookWorker_mac"
   },
   "keywords": [],
   "author": "",

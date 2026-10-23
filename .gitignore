@@ -4,6 +4,7 @@ node_modules/
 # Native Builds and Binaries
 native/InputHookWorker.exe
 native/InputHookWorker.pdb
+native/InputHookWorker_mac
 bin/
 obj/
 *.exe

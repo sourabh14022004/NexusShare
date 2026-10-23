@@ -15,16 +15,82 @@ class HookService extends EventEmitter {
     this.isReady = false;
   }
 
+  getWorkerBinaryPath() {
+    if (process.platform === 'win32') {
+      return path.join(__dirname, '../../native/InputHookWorker.exe');
+    } else if (process.platform === 'darwin') {
+      return path.join(__dirname, '../../native/InputHookWorker_mac');
+    } else {
+      return path.join(__dirname, '../../native/InputHookWorker_linux');
+    }
+  }
+
+  ensureWorkerCompiled(workerPath) {
+    if (fs.existsSync(workerPath)) {
+      if (process.platform !== 'win32') {
+        try { fs.chmodSync(workerPath, 0o755); } catch (e) {}
+      }
+      return true;
+    }
+
+    if (process.platform === 'win32') {
+      const srcPath = path.join(__dirname, '../../native/InputHookWorker.cs');
+      const cscPaths = [
+        'C:\\Windows\\Microsoft.NET\\Framework64\\v4.0.30319\\csc.exe',
+        'C:\\Windows\\Microsoft.NET\\Framework\\v4.0.30319\\csc.exe'
+      ];
+      for (const csc of cscPaths) {
+        if (fs.existsSync(csc)) {
+          console.log(`Compiling native Windows hook worker with ${csc}...`);
+          try {
+            require('child_process').execSync(`"${csc}" /target:exe /optimize+ /out:"${workerPath}" "${srcPath}"`, { stdio: 'inherit' });
+            return fs.existsSync(workerPath);
+          } catch (e) {
+            console.error('Failed to compile Windows worker:', e.message);
+          }
+        }
+      }
+    } else if (process.platform === 'darwin') {
+      const srcPath = path.join(__dirname, '../../native/InputHookWorker_mac.c');
+      if (fs.existsSync(srcPath)) {
+        console.log('Compiling native macOS hook worker with clang...');
+        try {
+          const cmd = `clang -O2 "${srcPath}" -framework ApplicationServices -framework CoreGraphics -framework Foundation -o "${workerPath}"`;
+          require('child_process').execSync(cmd, { stdio: 'inherit' });
+          if (fs.existsSync(workerPath)) {
+            fs.chmodSync(workerPath, 0o755);
+            return true;
+          }
+        } catch (e) {
+          console.error('Failed to compile macOS worker with clang:', e.message);
+        }
+      }
+    }
+    return false;
+  }
+
   start() {
-    const workerPath = path.join(__dirname, '../../native/InputHookWorker.exe');
+    const workerPath = this.getWorkerBinaryPath();
 
     if (!fs.existsSync(workerPath)) {
-      console.error(`Native worker binary not found at ${workerPath}.`);
-      this.emit('error', new Error(`Native worker binary not found at ${workerPath}`));
-      return false;
+      const compiled = this.ensureWorkerCompiled(workerPath);
+      if (!compiled) {
+        const err = new Error(
+          process.platform === 'darwin'
+            ? `Native macOS worker not found. Please compile with: npm run build-native:mac`
+            : `Native worker binary not found at ${workerPath}. Run npm run build-native:win`
+        );
+        console.error(err.message);
+        this.emit('error', err);
+        return false;
+      }
     }
 
     try {
+      if (process.platform !== 'win32') {
+        try { fs.chmodSync(workerPath, 0o755); } catch (e) {}
+      }
+
       this.worker = spawn(workerPath, [], {
         stdio: ['pipe', 'pipe', 'pipe'],
         windowsHide: true
