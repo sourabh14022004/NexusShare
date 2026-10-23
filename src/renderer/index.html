@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://fonts.gstatic.com;">
+  <title>NexusShare - Universal Mouse & Keyboard Sharing</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="app-container">
+    <!-- Top Glass Header -->
+    <header class="app-header">
+      <div class="brand">
+        <div class="brand-logo">
+          <svg class="logo-icon" viewBox="0 0 32 32" fill="none">
+            <rect width="32" height="32" rx="8" fill="url(#brand-grad)" />
+            <path d="M11 8C8.79086 8 7 9.79086 7 12V20C7 22.2091 8.79086 24 11 24H21C23.2091 24 25 22.2091 25 20V12C25 9.79086 23.2091 8 21 8H11Z" stroke="white" stroke-width="1.8"/>
+            <path d="M16 8V14M7 14H25" stroke="white" stroke-width="1.8" stroke-linecap="round"/>
+            <circle cx="21" cy="19" r="1.5" fill="#00f2fe"/>
+            <path d="M25 16C27 16 29 17.5 29 20M25 12C28.5 12 31 14.5 31 18" stroke="#00f2fe" stroke-width="1.5" stroke-linecap="round"/>
+            <defs>
+              <linearGradient id="brand-grad" x1="0" y1="0" x2="32" y2="32" gradientUnits="userSpaceOnUse">
+                <stop stop-color="#4F46E5"/>
+                <stop offset="1" stop-color="#06B6D4"/>
+              </linearGradient>
+            </defs>
+          </svg>
+        </div>
+        <div class="brand-text">
+          <div class="title-row">
+            <h1>NexusShare</h1>
+            <span class="version-tag">PRO v1.0</span>
+          </div>
+          <p class="subtitle">Cross-Device Mouse, Keyboard & Clipboard Sharing</p>
+        </div>
+      </div>
+
+      <div class="header-actions">
+        <!-- Active Machine Pill -->
+        <div id="active-machine-pill" class="header-pill pill-control local">
+          <span class="pill-dot"></span>
+          <span class="pill-label">Control: <strong id="active-machine-name">THIS PC</strong></span>
+        </div>
+
+        <!-- Emergency Lock Button -->
+        <button id="btn-toggle-lock" class="header-pill btn-pill-lock" title="Hardware Emergency Lock (Press ScrollLock)">
+          <span class="btn-icon">🔓</span>
+          <span id="lock-btn-text">Unlocked</span>
+          <kbd class="shortcut-badge">ScrollLock</kbd>
+        </button>
+
+        <!-- Security Protection Badge -->
+        <div id="header-security-badge" class="header-pill pill-security unprotected" title="Security & Password Protection (Click to configure)">
+          <span class="sec-icon">🔓</span>
+          <span id="header-security-text">Open</span>
+        </div>
+
+        <!-- Network State Indicator -->
+        <div id="net-status-badge" class="header-pill pill-net disconnected">
+          <span class="net-dot"></span>
+          <span id="net-status-text">Port :48260</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- Navigation Tabs -->
+    <nav class="app-nav">
+      <button class="nav-tab active" data-tab="tab-topology">
+        <svg viewBox="0 0 20 20" fill="currentColor"><path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v8a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM2 15a1 1 0 011-1h14a1 1 0 110 2H3a1 1 0 01-1-1z"/></svg>
+        Screen Topology
+      </button>
+      <button class="nav-tab" data-tab="tab-devices">
+        <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M3 3a1 1 0 000 2v8a2 2 0 002 2h2.586l-1.293 1.293a1 1 0 101.414 1.414L10 15.414l2.293 2.293a1 1 0 001.414-1.414L12.414 15H15a2 2 0 002-2V5a1 1 0 100-2H3zm11.707 4.707a1 1 0 00-1.414-1.414L10 9.586 8.707 8.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+        Devices & Discovery
+        <span id="discovery-count" class="badge">0</span>
+      </button>
+      <button class="nav-tab" data-tab="tab-files">
+        <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd"/></svg>
+        File Transfer
+        <span id="transfers-active-badge" class="badge" style="display: none;">0</span>
+      </button>
+      <button class="nav-tab" data-tab="tab-sandbox">
+        <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd"/></svg>
+        Interactive Sandbox
+      </button>
+      <button class="nav-tab" data-tab="tab-settings">
+        <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clip-rule="evenodd"/></svg>
+        Preferences
+      </button>
+    </nav>
+
+    <!-- Main Content Area -->
+    <main class="app-main">
+      <!-- TAB 1: SCREEN TOPOLOGY -->
+      <section id="tab-topology" class="tab-pane active">
+        <!-- Telemetry Stats Strip -->
+        <div class="telemetry-bar">
+          <div class="stat-card">
+            <div class="stat-header">
+              <span class="stat-title">NETWORK LATENCY</span>
+              <span class="stat-icon">⚡</span>
+            </div>
+            <div class="stat-value"><span id="telemetry-latency">--</span> <small>ms</small></div>
+            <div class="stat-footer" id="telemetry-latency-status">Direct LAN</div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-header">
+              <span class="stat-title">STREAM RATE</span>
+              <span class="stat-icon">📡</span>
+            </div>
+            <div class="stat-value"><span id="telemetry-pps">0</span> <small>pkts/s</small></div>
+            <div class="stat-footer">High-speed event sync</div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-header">
+              <span class="stat-title">CLIPBOARD SHARING</span>
+              <span class="stat-icon">📋</span>
+            </div>
+            <div class="stat-value"><span id="telemetry-clipboard-state">Active</span></div>
+            <div class="stat-footer" id="telemetry-clipboard-sub">Auto-sync text & images</div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-header">
+              <span class="stat-title">ACTIVE TRANSITION EDGE</span>
+              <span class="stat-icon">↔</span>
+            </div>
+            <div class="stat-value"><span id="telemetry-edge">Right Edge</span></div>
+            <div class="stat-footer" id="telemetry-edge-sub">Delay: 80ms • Thresh: 3px</div>
+          </div>
+        </div>
+
+        <!-- Virtual Workspace Arrangement -->
+        <div class="topology-container card">
+          <div class="card-header">
+            <div>
+              <h3>Monitor Arrangement & Desk Topology</h3>
+              <p>Drag or select where the remote computer sits relative to your primary display.</p>
+            </div>
+            <div class="topology-controls">
+              <span class="layout-label">Position Remote PC:</span>
+              <div class="layout-button-group">
+                <button class="btn-layout" data-pos="left">Left</button>
+                <button class="btn-layout active" data-pos="right">Right</button>
+                <button class="btn-layout" data-pos="top">Above</button>
+                <button class="btn-layout" data-pos="bottom">Below</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Canvas / Workspace Viewport -->
+          <div class="screen-canvas-wrapper">
+            <div class="screen-canvas" id="topology-canvas">
+              <!-- Local Monitor -->
+              <div class="monitor-tile local active" id="monitor-local">
+                <div class="monitor-bezel">
+                  <div class="monitor-screen">
+                    <div class="monitor-glow"></div>
+                    <div class="monitor-content">
+                      <span class="monitor-type-badge">THIS COMPUTER</span>
+                      <h4 id="monitor-local-name">Primary PC</h4>
+                      <p id="monitor-local-res" class="monitor-res">1920 × 1080</p>
+                      <div class="monitor-cursor-indicator" id="cursor-local">
+                        <span class="cursor-pointer"></span>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="monitor-stand"></div>
+                </div>
+                <div class="monitor-status-pill">
+                  <span class="status-indicator active"></span> Focus Active
+                </div>
+              </div>
+
+              <!-- Transition Edge Beam -->
+              <div class="transition-beam" id="transition-beam">
+                <div class="beam-glow"></div>
+                <div class="beam-arrows">➔➔➔</div>
+              </div>
+
+              <!-- Remote Monitor -->
+              <div class="monitor-tile remote drop-target-monitor" id="monitor-remote" title="Drag & drop files here to beam to remote PC">
+                <div class="monitor-bezel">
+                  <div class="monitor-screen">
+                    <div class="monitor-glow"></div>
+                    <!-- Drop Zone Overlay -->
+                    <div class="monitor-drop-overlay" id="monitor-drop-overlay">
+                      <span class="drop-icon-sm">📥</span>
+                      <span class="drop-text">DROP FILES TO BEAM</span>
+                    </div>
+                    <div class="monitor-content">
+                      <span class="monitor-type-badge">REMOTE COMPUTER</span>
+                      <h4 id="monitor-remote-name">No Device Connected</h4>
+                      <p id="monitor-remote-res" class="monitor-res">Waiting for link...</p>
+                      <div class="monitor-cursor-indicator" id="cursor-remote">
+                        <span class="cursor-pointer"></span>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="monitor-stand"></div>
+                </div>
+                <div class="monitor-status-pill">
+                  <span class="status-indicator"></span> Standby
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Manual Switch Action Footer -->
+          <div class="canvas-footer">
+            <div class="info-tag">
+              <span class="info-icon">💡</span>
+              <span>Glide your mouse across the <strong>Right edge</strong> of your display to transition seamlessly into the remote screen.</span>
+            </div>
+            <div class="action-buttons">
+              <button id="btn-manual-switch" class="btn btn-primary">
+                <span>Switch Screen Now</span>
+                <span class="btn-arrow">→</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 2: DEVICES & DISCOVERY -->
+      <section id="tab-devices" class="tab-pane">
+        <div class="grid-2col">
+          <!-- Discovered LAN Devices -->
+          <div class="card">
+            <div class="card-header">
+              <div>
+                <h3>Auto-Discovered LAN Devices</h3>
+                <p>Nearby computers running NexusShare on your Wi-Fi or Ethernet network.</p>
+              </div>
+              <div class="radar-indicator">
+                <span class="radar-ping"></span>
+                <span class="radar-text">Broadcasting</span>
+              </div>
+            </div>
+
+            <div id="discovered-list" class="device-list">
+              <div class="empty-state" id="empty-discovery">
+                <div class="empty-icon">📡</div>
+                <h4>Listening for nearby devices...</h4>
+                <p>Open NexusShare on your second computer to connect automatically without typing IP addresses.</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Direct Manual Connection -->
+          <div class="card">
+            <div class="card-header">
+              <div>
+                <h3>Direct IP Connection</h3>
+                <p>Connect manually across subnets, routers, or VPN connections.</p>
+              </div>
+            </div>
+
+            <form id="form-direct-connect" class="form-container">
+              <div class="form-group">
+                <label for="input-target-ip">Target Computer IP Address</label>
+                <div class="input-with-icon">
+                  <input type="text" id="input-target-ip" placeholder="192.168.1.50" required>
+                </div>
+              </div>
+
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="input-target-port">Port</label>
+                  <input type="number" id="input-target-port" value="48260">
+                </div>
+                <div class="form-group">
+                  <label for="input-target-password">Password / PIN (if protected)</label>
+                  <div class="input-with-action">
+                    <input type="password" id="input-target-password" placeholder="Enter target PC password">
+                    <button type="button" class="btn-toggle-view" id="btn-toggle-target-pass" title="Show/Hide Password">👁️</button>
+                  </div>
+                </div>
+              </div>
+
+              <div class="form-actions">
+                <button type="submit" id="btn-connect" class="btn btn-primary btn-block">
+                  <span>Connect to Device</span>
+                </button>
+                <button type="button" id="btn-disconnect" class="btn btn-danger btn-block" style="display: none;">
+                  <span>Disconnect</span>
+                </button>
+              </div>
+            </form>
+
+            <div class="local-identity card-sub">
+              <h4>This Computer's Connection Info:</h4>
+              <div class="info-row">
+                <span class="info-label">Device Name:</span>
+                <span class="info-val" id="my-device-name">--</span>
+              </div>
+              <div class="info-row">
+                <span class="info-label">Local IP Addresses:</span>
+                <span class="info-val code-text" id="my-local-ips">Detecting...</span>
+              </div>
+              <div class="info-row">
+                <span class="info-label">Port:</span>
+                <span class="info-val code-text" id="my-local-port">48260</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 3: FILE TRANSFER & DRAG AND DROP -->
+      <section id="tab-files" class="tab-pane">
+        <!-- Hero Drop Zone -->
+        <div class="card file-drop-card">
+          <div class="card-header">
+            <div>
+              <h3>Cross-Device Drag & Drop File Transfer</h3>
+              <p>Drag files from your computer and drop them anywhere here to beam them directly to the connected device.</p>
+            </div>
+            <div class="file-vault-actions">
+              <button type="button" class="btn btn-outline btn-sm" id="btn-open-downloads-dir">
+                <span>📁 Open NexusShare Folder</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Interactive File Drop Zone -->
+          <div class="file-drop-hero" id="file-drop-zone">
+            <div class="drop-hero-content">
+              <div class="drop-hero-icon">🚀</div>
+              <h4>Drag & Drop Files Here to Beam Across Devices</h4>
+              <p id="file-target-notice">Drop any file from your Windows desktop or file manager</p>
+              <div class="drop-hero-btn-row">
+                <input type="file" id="file-input-picker" multiple style="display: none;">
+                <button type="button" class="btn btn-primary" id="btn-browse-file-picker">
+                  <span>Browse Files to Send...</span>
+                </button>
+              </div>
+            </div>
+            <div class="drop-pulse-ring"></div>
+          </div>
+        </div>
+
+        <div class="grid-2col">
+          <!-- Active Transfers Stream -->
+          <div class="card">
+            <div class="card-header">
+              <div>
+                <h3>Active Transfers</h3>
+                <p>Live progress of files streaming between devices.</p>
+              </div>
+            </div>
+
+            <div id="active-transfers-list" class="transfers-container">
+              <div class="empty-state" id="empty-transfers">
+                <div class="empty-icon">⚡</div>
+                <h4>No active file transfers</h4>
+                <p>Drag and drop any file onto the drop box or onto the Remote Monitor in the Topology tab to initiate a transfer.</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Received Files Vault -->
+          <div class="card">
+            <div class="card-header">
+              <div>
+                <h3>Received Files Vault</h3>
+                <p>Files received from other devices in <code>Downloads/NexusShare</code>.</p>
+              </div>
+              <button type="button" class="btn btn-outline btn-sm" id="btn-refresh-received">↻ Refresh</button>
+            </div>
+
+            <div id="received-files-list" class="transfers-container">
+              <div class="empty-state" id="empty-received">
+                <div class="empty-icon">📂</div>
+                <h4>No files received yet</h4>
+                <p>Files beamed from connected computers will appear here with 1-click open options.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 3: INTERACTIVE SANDBOX -->
+      <section id="tab-sandbox" class="tab-pane">
+        <div class="card sandbox-card">
+          <div class="card-header">
+            <div>
+              <h3>Interactive Mouse Hopping Sandbox</h3>
+              <p>Test screen boundary transitions, cursor handoff, and coordinate normalization directly in this simulation canvas.</p>
+            </div>
+            <div class="sandbox-actions">
+              <button id="btn-sandbox-toggle" class="btn btn-outline">
+                <span id="sandbox-state-text">Enable Local Simulator</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="sandbox-playground" id="sandbox-area">
+            <div class="virtual-desk">
+              <div class="virtual-screen" id="virtual-screen-a">
+                <div class="vs-header">SCREEN 1: HOST</div>
+                <div class="vs-canvas" id="canvas-area-a">
+                  <div class="virtual-cursor" id="vcursor-a"></div>
+                  <div class="vs-center-msg">Hover mouse here and move towards the right edge!</div>
+                </div>
+              </div>
+
+              <div class="virtual-boundary">
+                <div class="boundary-line"></div>
+                <span class="boundary-label">EDGE GATE</span>
+              </div>
+
+              <div class="virtual-screen" id="virtual-screen-b">
+                <div class="vs-header">SCREEN 2: CLIENT</div>
+                <div class="vs-canvas" id="canvas-area-b">
+                  <div class="virtual-cursor" id="vcursor-b"></div>
+                  <div class="vs-center-msg">Cursor glides in here smoothly!</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="sandbox-telemetry">
+            <div class="sb-stat">Relative Coords: <span id="sb-coords" class="code-text">X: 0, Y: 0</span></div>
+            <div class="sb-stat">Active Focus: <strong id="sb-focus">SCREEN 1</strong></div>
+            <div class="sb-stat">Transition Event: <span id="sb-transition-event" class="code-text">None</span></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 4: PREFERENCES -->
+      <section id="tab-settings" class="tab-pane">
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <h3>Preferences & Switching Controls</h3>
+              <p>Fine-tune edge sensitivity, hotkeys, and sharing behaviors.</p>
+            </div>
+          </div>
+
+          <div class="settings-grid">
+            <div class="setting-item">
+              <div class="setting-info">
+                <h4>Edge Switch Dwell Delay</h4>
+                <p>Prevents accidental switching when flicking the cursor against the edge. Higher values require the cursor to linger longer.</p>
+              </div>
+              <div class="setting-control range-control">
+                <input type="range" id="pref-switch-delay" min="0" max="300" step="20" value="80">
+                <span id="pref-switch-delay-val" class="range-val">80 ms</span>
+              </div>
+            </div>
+
+            <div class="setting-item">
+              <div class="setting-info">
+                <h4>Edge Trigger Sensitivity</h4>
+                <p>The pixel thickness of the active border threshold.</p>
+              </div>
+              <div class="setting-control range-control">
+                <input type="range" id="pref-edge-threshold" min="1" max="15" step="1" value="3">
+                <span id="pref-edge-threshold-val" class="range-val">3 px</span>
+              </div>
+            </div>
+
+            <div class="setting-item">
+              <div class="setting-info">
+                <h4>Clipboard Synchronization</h4>
+                <p>Automatically sync text, links, and copied content between devices.</p>
+              </div>
+              <div class="setting-control">
+                <label class="switch">
+                  <input type="checkbox" id="pref-sync-clipboard" checked>
+                  <span class="slider"></span>
+                </label>
+              </div>
+            </div>
+
+            <div class="setting-item">
+              <div class="setting-info">
+                <h4>Audio Chime Feedback</h4>
+                <p>Play a subtle acoustic chime whenever the cursor hops between devices.</p>
+              </div>
+              <div class="setting-control">
+                <label class="switch">
+                  <input type="checkbox" id="pref-sound-effects" checked>
+                  <span class="slider"></span>
+                </label>
+              </div>
+            </div>
+
+            <div class="setting-item">
+              <div class="setting-info">
+                <h4>Emergency Escape Key</h4>
+                <p>Hardware key that instantly unlocks and forces control back to this machine.</p>
+              </div>
+              <div class="setting-control">
+                <select id="pref-emergency-key" class="select-input">
+                  <option value="ScrollLock">Scroll Lock</option>
+                  <option value="Pause">Pause / Break</option>
+                  <option value="F12">F12 Key</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="setting-item">
+              <div class="setting-info">
+                <h4>Custom Device Name</h4>
+                <p>How this computer identifies itself to other devices on the LAN.</p>
+              </div>
+              <div class="setting-control">
+                <input type="text" id="pref-device-name" class="text-input" placeholder="e.g. Workstation PC">
+              </div>
+            </div>
+
+            <!-- Security & Password Protection -->
+            <div class="setting-item">
+              <div class="setting-info">
+                <h4>Require Password for Incoming Connections</h4>
+                <p>Protect this PC from unauthorized access. Other computers must enter a matching password or PIN before controlling mouse & keyboard.</p>
+              </div>
+              <div class="setting-control">
+                <label class="switch">
+                  <input type="checkbox" id="pref-require-password">
+                  <span class="slider"></span>
+                </label>
+              </div>
+            </div>
+
+            <div class="setting-item" id="row-pref-password" style="display: none;">
+              <div class="setting-info">
+                <h4>Host Password / PIN</h4>
+                <p>The password other computers must provide to establish a link with this device.</p>
+              </div>
+              <div class="setting-control password-setting-box">
+                <div class="input-with-action">
+                  <input type="password" id="pref-password" class="text-input" placeholder="e.g. 583921 or SecureKey">
+                  <button type="button" class="btn-toggle-view" id="btn-toggle-pref-pass" title="Show/Hide">👁️</button>
+                </div>
+                <button type="button" class="btn btn-outline btn-sm" id="btn-gen-pin">Generate PIN</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="settings-actions">
+            <button id="btn-save-settings" class="btn btn-primary">Save Preferences</button>
+            <span id="save-settings-indicator" class="save-indicator">Saved!</span>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- Password Authentication Modal -->
+    <div id="modal-password" class="modal-overlay" style="display: none;">
+      <div class="modal-dialog">
+        <div class="modal-header">
+          <div class="modal-icon">🔐</div>
+          <div>
+            <h3 id="modal-device-title">Authentication Required</h3>
+            <p id="modal-device-subtitle">Target computer requires a password to connect.</p>
+          </div>
+        </div>
+        <div class="modal-body">
+          <div class="form-group">
+            <label for="input-modal-password">Connection Password / PIN</label>
+            <div class="input-with-action">
+              <input type="password" id="input-modal-password" placeholder="Enter password or PIN">
+              <button type="button" class="btn-toggle-view" id="btn-toggle-modal-pass" title="Show/Hide">👁️</button>
+            </div>
+          </div>
+          <div id="modal-auth-error" class="auth-error-msg" style="display: none;"></div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline" id="btn-modal-cancel">Cancel</button>
+          <button type="button" class="btn btn-primary" id="btn-modal-submit">Connect Now</button>
+        </div>
+      </div>
+    <!-- Global Drag & Drop Overlay -->
+    <div id="window-drag-overlay" class="window-drag-overlay" style="display: none;">
+      <div class="drag-overlay-card">
+        <div class="drag-overlay-icon">🚀</div>
+        <h3>Drop Files to Beam Across Devices</h3>
+        <p id="window-drag-target-name">Sending to: Remote PC</p>
+      </div>
+    </div>
+
+    <!-- Bottom Activity / Event Stream Drawer -->
+    <footer class="app-footer">
+      <div class="log-drawer">
+        <span class="log-label">ACTIVITY LOG:</span>
+        <span id="latest-log" class="log-msg">NexusShare engine initialized and listening for peer events...</span>
+      </div>
+      <div class="footer-links">
+        <span class="shortcut-tip">Tip: Press <kbd>ScrollLock</kbd> anytime to lock/unlock mouse locally</span>
+      </div>
+    </footer>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

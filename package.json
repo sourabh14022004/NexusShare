@@ -1,0 +1,18 @@
+{
+  "name": "mouse-share",
+  "version": "1.0.0",
+  "description": "",
+  "main": "src/main/main.js",
+  "scripts": {
+    "start": "electron .",
+    "build-native": "C:\\Windows\\Microsoft.NET\\Framework64\\v4.0.30319\\csc.exe /target:exe /optimize+ /out:native\\InputHookWorker.exe native\\InputHookWorker.cs"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "electron": "^45.0.0",
+    "ws": "^8.22.0"
+  }
+}
